@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LifeLink — Fair, Fast Organ Donor Matching</title>
+<meta name="description" content="LifeLink is an organ donor–recipient matching platform that uses graph algorithms to find the maximum number of life-saving matches, prioritizing critical patients. Built by Rimsha Sagheer.">
+<meta property="og:title" content="LifeLink — Fair, Fast Organ Donor Matching">
+<meta property="og:description" content="Matching by algorithm, not by luck. Try the live matching console.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"LifeLink","applicationCategory":"HealthApplication","description":"Organ donor–recipient matching using maximum bipartite matching.","creator":{"@type":"Person","name":"Rimsha Sagheer","jobTitle":"AI Engineer & Entrepreneur","sameAs":["https://www.linkedin.com/in/rimsha-sagheer-40b549434"]}}
+</script>
+<style>
+/* ===== TOKENS ===== */
+:root{
+  --bg:#f8f6f2;--surface:#fff;--ink:#16191d;--muted:#525b64;--line:#dedbd3;
+  --accent:#0f766e;--on-accent:#fff;--accent-soft:#dff1ee;--warm:#c2410c;--warm-soft:#fde8dc;
+  --s2:.5rem;--s3:.75rem;--s4:1rem;--s5:1.5rem;--s6:2.5rem;--s7:4.5rem;--r:14px;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 10px 26px -14px rgba(0,0,0,.2);
+  --display:"Fraunces",Georgia,serif;--sans:"Inter",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1214;--surface:#161b1e;--ink:#ecebe6;--muted:#a4adb4;--line:#2a3136;--accent:#2dd4bf;--on-accent:#06201d;--accent-soft:#12302d;--warm:#fb923c;--warm-soft:#3a2314;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 26px -14px rgba(0,0,0,.7);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1214;--surface:#161b1e;--ink:#ecebe6;--muted:#a4adb4;--line:#2a3136;--accent:#2dd4bf;--on-accent:#06201d;--accent-soft:#12302d;--warm:#fb923c;--warm-soft:#3a2314;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 26px -14px rgba(0,0,0,.7);color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:calc(72px + env(safe-area-inset-top,0px))}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.65 var(--sans);overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:60}
+h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0 0 var(--s3)}
+h1{font-size:clamp(2.3rem,6.5vw,4.3rem);letter-spacing:-.02em}h2{font-size:clamp(1.6rem,3.2vw,2.2rem)}h3{font-size:1.15rem}
+p{margin:0 0 var(--s4)}a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 var(--s5)}section{padding:var(--s7) 0}
+.eyebrow{font:500 .8rem/1 var(--mono);color:var(--accent);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:var(--s3)}
+.muted{color:var(--muted)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:6px}
+.skip{position:absolute;left:-999px;background:var(--accent);color:var(--on-accent);padding:var(--s2) var(--s4);z-index:100}.skip:focus{left:var(--s4);top:var(--s4)}
+.btn{display:inline-flex;align-items:center;padding:.7rem 1.2rem;border-radius:999px;font:600 .95rem var(--sans);text-decoration:none;border:1.5px solid var(--accent);background:var(--accent);color:var(--on-accent);cursor:pointer;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow)}.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}.btn.ghost:hover{border-color:var(--accent)}.btn.sm{padding:.4rem .8rem;font-size:.85rem}
+.grid{display:grid;gap:var(--s5);grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--s5);transition:transform .25s,box-shadow .25s,border-color .25s}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--accent)}
+.k{font:500 .78rem var(--mono);color:var(--accent)}
+code{font-family:var(--mono);background:var(--accent-soft);padding:.1rem .4rem;border-radius:6px;font-size:.88em}
+/* nav */
+header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:var(--s4)}
+.logo{font:700 1.2rem var(--display);text-decoration:none}.logo span{color:var(--accent)}
+header ul{display:flex;gap:var(--s5);list-style:none;margin:0;padding:0;font-size:.875rem}header ul a{text-decoration:none;color:var(--muted);font-weight:500}header ul a:hover{color:var(--ink)}
+.tools{display:flex;gap:var(--s3);align-items:center}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font-size:1.05rem}
+.burger{display:none}
+@media (max-width:860px){.burger{display:block}header .cta{display:none}header ul{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--bg);padding:var(--s4) var(--s5);border-bottom:1px solid var(--line)}header ul.open{display:flex}}
+/* hero */
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--s6);align-items:center}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr}}
+.hero h1 em{font-style:normal;color:var(--accent)}.lead{font-size:1.2rem;max-width:34rem}
+.actions{display:flex;flex-wrap:wrap;gap:var(--s3);margin-top:var(--s5)}
+.stat{display:flex;align-items:baseline;gap:var(--s3);margin-top:var(--s5);padding-top:var(--s4);border-top:1px solid var(--line)}.stat b{font:700 2.2rem var(--display);color:var(--warm)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--s4)}
+svg.g{width:100%;height:auto;display:block}
+.g .e{stroke:var(--line);stroke-width:1.5}.g .m{stroke:var(--accent);stroke-width:4;stroke-linecap:round}
+.g .n{fill:var(--surface);stroke-width:1.8}.g .d{stroke:var(--warm)}.g .p{stroke:var(--accent)}.g .cr{stroke-width:4}
+.g text{font:500 12px var(--mono);fill:var(--ink)}.g .lab{fill:var(--muted);font-size:10px}
+.draw{stroke-dasharray:260;stroke-dashoffset:260;animation:dr 1.2s .3s forwards}@keyframes dr{to{stroke-dashoffset:0}}
+/* console */
+.console{display:grid;grid-template-columns:1fr 1fr;gap:var(--s5)}@media (max-width:900px){.console{grid-template-columns:1fr}}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.88rem}th,td{text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line);white-space:nowrap}th{font:500 .72rem var(--mono);color:var(--muted);text-transform:uppercase}
+.badge{font:500 .72rem var(--mono);padding:.15rem .5rem;border-radius:6px;border:1px solid var(--line)}.badge.c{background:var(--warm-soft);border-color:var(--warm);color:var(--ink)}
+form.add{display:grid;gap:var(--s3);grid-template-columns:repeat(auto-fit,minmax(120px,1fr));align-items:end;margin-top:var(--s4)}
+label{display:grid;gap:.25rem;font-size:.8rem;font-weight:500}
+select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.55rem .65rem;width:100%}
+.x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1rem}.x:hover{color:var(--warm)}
+.scores{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4);margin:var(--s4) 0}
+.score{border:1px solid var(--line);border-radius:12px;padding:var(--s4)}.score b{display:block;font:700 2.2rem var(--display)}.score.hl{border-color:var(--accent);background:var(--accent-soft)}
+.note{font-size:.82rem;color:var(--muted)}
+.steps{display:grid;gap:var(--s5);grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+footer{border-top:1px solid var(--line);padding:var(--s6) 0;font-size:.875rem;color:var(--muted)}footer .wrap{display:flex;flex-wrap:wrap;gap:var(--s4);justify-content:space-between}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s,transform .6s}.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}.reveal{opacity:1;transform:none}.draw{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ===== NAV ===== -->
+<header><div class="wrap">
+  <a class="logo" href="#top" aria-label="LifeLink home">Life<span>Link</span></a>
+  <nav aria-label="Primary"><ul id="menu">
+    <li><a href="#solution">Solution</a></li><li><a href="#console">Matching console</a></li><li><a href="#how">How it works</a></li><li><a href="#partners">Who it’s for</a></li><li><a href="#founder">Founder</a></li>
+  </ul></nav>
+  <div class="tools">
+    <button class="icon-btn" id="theme" type="button" aria-label="Toggle light and dark mode">◐</button>
+    <a class="btn cta" href="#console">Open console</a>
+    <button class="icon-btn burger" id="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menu">☰</button>
+  </div>
+</div></header>
+
+<main id="main">
+<!-- ===== HERO ===== -->
+<section class="hero" id="top"><div class="wrap">
+  <div>
+    <span class="eyebrow">Organ donor–recipient matching platform</span>
+    <h1>Matching by algorithm, <em>not by luck.</em></h1>
+    <p class="lead">LifeLink finds the maximum number of life-saving matches between donors and patients, and puts critical patients first.</p>
+    <p class="muted">Registration, validation, graph building and optimal matching in one workflow, in seconds instead of weeks.</p>
+    <div class="actions"><a class="btn" href="#console">Open the matching console</a><a class="btn ghost" href="#how">How it works</a></div>
+    <div class="stat"><b>50,000+</b><span class="muted">patients waiting for an organ in Pakistan. Every day, someone’s name on that list runs out of time.</span></div>
+  </div>
+  <div class="panel"><svg class="g" id="heroG" viewBox="0 0 360 300" role="img" aria-label="Donors on the left connected to compatible patients on the right, with the optimal matches highlighted"></svg></div>
+</div></section>
+
+<!-- ===== SOLUTION ===== -->
+<section id="solution"><div class="wrap reveal">
+  <span class="eyebrow">The solution</span><h2>From a slow, manual process to a fair, fast one.</h2>
+  <div class="grid">
+    <div class="card"><span class="k">SLOW → FAST</span><h3>Seconds, not weeks</h3><p class="muted">Matching runs in <code>O(E·√V)</code> time on the compatibility graph.</p></div>
+    <div class="card"><span class="k">ERRORS → CONSISTENCY</span><h3>No missed patterns</h3><p class="muted">Every donor–patient pair is checked by the same rules, every time.</p></div>
+    <div class="card"><span class="k">MISSED → FOUND</span><h3>One more life</h3><p class="muted">First-come-first-matched can block better pairings. Maximum matching re-routes earlier choices to save more people.</p></div>
+    <div class="card"><span class="k">LUCK → LOGIC</span><h3>Priority built in</h3><p class="muted">Critical patients and longer waits are ranked first, then the matching is maximized around them.</p></div>
+  </div>
+</div></section>
+
+<!-- ===== CONSOLE (WORKING TOOL) ===== -->
+<section id="console"><div class="wrap reveal">
+  <span class="eyebrow">Matching console</span><h2>Register, then match.</h2>
+  <p class="muted" style="max-width:42rem">Add or remove donors and patients, then run the matcher. It compares LifeLink’s maximum matching with a first-come baseline on the same data.</p>
+  <div class="console">
+    <div class="card">
+      <h3>Donors <span class="muted" id="dN"></span></h3><div class="scroll"><table><thead><tr><th>ID</th><th>Blood</th><th>Organ</th><th></th></tr></thead><tbody id="dT"></tbody></table></div>
+      <h3 style="margin-top:var(--s5)">Patients <span class="muted" id="pN"></span></h3><div class="scroll"><table><thead><tr><th>ID</th><th>Blood</th><th>Organ</th><th>Urgency</th><th>Waiting</th><th></th></tr></thead><tbody id="pT"></tbody></table></div>
+      <form class="add" id="add" aria-label="Register a donor or patient">
+        <label>Type<select id="fType"><option value="D">Donor</option><option value="P">Patient</option></select></label>
+        <label>Blood<select id="fBlood"><option>O</option><option>A</option><option>B</option><option>AB</option></select></label>
+        <label>Organ<select id="fOrgan"><option>Kidney</option><option>Liver</option></select></label>
+        <label>Urgency<select id="fUrg"><option>Routine</option><option>High</option><option>Critical</option></select></label>
+        <label>Waiting (days)<input id="fWait" type="number" min="0" max="5000" value="30"></label>
+        <button class="btn" type="submit">Add</button>
+      </form>
+      <div class="actions"><button class="btn ghost sm" id="bReset" type="button">Reset sample data</button></div>
+    </div>
+    <div class="card">
+      <div class="actions" style="margin-top:0"><button class="btn" id="bRun" type="button">Run matching</button></div>
+      <div class="scores" aria-live="polite"><div class="score hl"><span class="note">LifeLink</span><b id="sMax">–</b><span class="note">matches</span></div><div class="score"><span class="note">First-come baseline</span><b id="sGreedy">–</b><span class="note">matches</span></div></div>
+      <svg class="g" id="demoG" viewBox="0 0 360 300" role="img" aria-label="Matching graph for the current donors and patients"></svg>
+      <div class="scroll"><table aria-label="Matched pairs"><thead><tr><th>Patient</th><th>Urgency</th><th>Donor</th><th>Blood</th></tr></thead><tbody id="rT"><tr><td colspan="4" class="muted">Run the matcher to see results.</td></tr></tbody></table></div>
+      <p class="note" id="rNote" style="margin-top:var(--s3)"></p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:var(--s4)">Sample data. Matching uses ABO blood-group and organ compatibility; HLA and crossmatch rules plug into the same step. LifeLink supports decisions: final allocation stays with transplant teams. Everything runs in your browser and nothing is uploaded.</p>
+</div></section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section id="how"><div class="wrap reveal">
+  <span class="eyebrow">How it works</span><h2>Five stages, one optimal result.</h2>
+  <div class="steps">
+    <div class="card"><span class="k">1 · REGISTRATION</span><h3>Capture records</h3><p class="muted">Donor and patient data enter the registry.</p></div>
+    <div class="card"><span class="k">2 · VALIDATION</span><h3>Check eligibility</h3><p class="muted">Blood group, HLA and location are validated.</p></div>
+    <div class="card"><span class="k">3 · GRAPH BUILDER</span><h3>Build the graph</h3><p class="muted">Donors <code>D</code> and patients <code>P</code> become vertices; an edge means <code>Compatible(d, p)</code>. No edges within a side: a bipartite graph.</p></div>
+    <div class="card"><span class="k">4 · MATCHING ENGINE</span><h3>Maximize matches</h3><p class="muted">Augmenting paths (the idea behind Hopcroft–Karp) find the largest set of pairs, processing the most urgent patients first.</p></div>
+    <div class="card"><span class="k">5 · RESULT</span><h3>Notify pairs</h3><p class="muted">Matched pairs are reported for clinical review and notification.</p></div>
+  </div>
+</div></section>
+
+<!-- ===== PARTNERS ===== -->
+<section id="partners"><div class="wrap reveal">
+  <span class="eyebrow">Who it’s for</span><h2>Built to connect with the people who run transplant care.</h2>
+  <div class="grid">
+    <div class="card"><h3>Transplant centres</h3><p class="muted">Faster, more consistent donor–patient screening.</p></div>
+    <div class="card"><h3>Registries</h3><p class="muted">Can integrate with a national transplant registry.</p></div>
+    <div class="card"><h3>Health authorities</h3><p class="muted">Allocation by logic, with a transparent record of how matches were made.</p></div>
+  </div>
+  <p style="margin-top:var(--s5)"><strong>What’s next:</strong> kidney exchange chains, which means finding cycles in the graph.</p>
+</div></section>
+
+<!-- ===== FOUNDER ===== -->
+<section id="founder"><div class="wrap reveal">
+  <div class="card" style="max-width:760px">
+    <span class="eyebrow">Founder</span>
+    <h2>Built by Rimsha Sagheer</h2>
+    <p><strong>AI Engineer &amp; Entrepreneur.</strong> I build AI systems and the businesses around them. LifeLink is the matching platform I’m developing to make organ allocation faster and fairer.</p>
+    <p class="muted">Interested in a pilot, a partnership or a conversation about the system? Reach out.</p>
+    <div class="actions"><a class="btn" href="https://www.linkedin.com/in/rimsha-sagheer-40b549434" rel="noopener" target="_blank">Connect on LinkedIn</a></div>
+  </div>
+</div></section>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer><div class="wrap">
+  <span>© <span id="yr">2026</span> LifeLink · Rimsha Sagheer, AI Engineer &amp; Entrepreneur</span>
+  <a href="#top">Back to top ↑</a>
+</div></footer>
+
+<script>
+/* ===== DATA (sample; editable in the console) ===== */
+const SAMPLE_D=[{id:"D1",b:"B",o:"Kidney"},{id:"D2",b:"O",o:"Kidney"},{id:"D3",b:"A",o:"Kidney"},{id:"D4",b:"AB",o:"Kidney"},{id:"D5",b:"O",o:"Liver"},{id:"D6",b:"A",o:"Liver"}];
+const SAMPLE_P=[{id:"P1",b:"A",o:"Kidney",u:"Routine",w:120},{id:"P2",b:"AB",o:"Kidney",u:"Critical",w:45},{id:"P3",b:"B",o:"Kidney",u:"High",w:300},{id:"P4",b:"O",o:"Liver",u:"Critical",w:60},{id:"P5",b:"A",o:"Liver",u:"High",w:200}];
+const GIVES={O:["O","A","B","AB"],A:["A","AB"],B:["B","AB"],AB:["AB"]}; // ABO donor -> recipients
+const URG={Critical:3,High:2,Routine:1};
+let D=structuredClone(SAMPLE_D),P=structuredClone(SAMPLE_P),nD=7,nP=6,res=null;
+
+/* ===== MATCHING ENGINE ===== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const compat=(d,p)=>d.o===p.o&&GIVES[d.b].includes(p.b);
+const score=p=>URG[p.u]*10000+p.w; // urgency first, then waiting time
+function maximum(D,P){ // augmenting paths, patients processed by priority
+  const flex=d=>P.filter(p=>compat(d,p)).length,mD={};
+  const adj={};P.forEach(p=>adj[p.id]=D.filter(d=>compat(d,p)).sort((a,b)=>flex(a)-flex(b)));
+  const aug=(p,seen)=>{for(const d of adj[p.id]){if(seen.has(d.id))continue;seen.add(d.id);const o=mD[d.id];if(!o||aug(o,seen)){mD[d.id]=p;return true}}return false};
+  [...P].sort((a,b)=>score(b)-score(a)).forEach(p=>aug(p,new Set()));
+  return mD; // donor id -> patient
+}
+function baseline(D,P){const taken=new Set(),m={};D.forEach(d=>{const p=P.find(p=>!taken.has(p.id)&&compat(d,p));if(p){taken.add(p.id);m[d.id]=p}});return m}
+
+/* ===== GRAPH DRAWING ===== */
+function draw(el,D,P,m,anim){
+  const n=Math.max(D.length,P.length,2),H=60+n*46,Y=(i,len)=>50+i*((H-80)/Math.max(len-1,1)),pos={};
+  D.forEach((d,i)=>pos[d.id]=[70,Y(i,D.length)]);P.forEach((p,i)=>pos[p.id]=[290,Y(i,P.length)]);
+  let h="";D.forEach(d=>P.forEach(p=>{if(compat(d,p)){const[a,b]=pos[d.id],[c,e]=pos[p.id];h+=`<line class="e" x1="${a}" y1="${b}" x2="${c}" y2="${e}"/>`}}));
+  for(const id in (m||{})){const[a,b]=pos[id],[c,e]=pos[m[id].id];h+=`<line class="m ${anim?"draw":""}" x1="${a}" y1="${b}" x2="${c}" y2="${e}"/>`}
+  D.forEach(d=>{const[x,y]=pos[d.id];h+=`<circle class="n d" cx="${x}" cy="${y}" r="20"/><text x="${x}" y="${y+4}" text-anchor="middle">${d.id}</text><text class="lab" x="${x-30}" y="${y+4}" text-anchor="end">${d.b}·${d.o[0]}</text>`});
+  P.forEach(p=>{const[x,y]=pos[p.id];h+=`<circle class="n p ${p.u==="Critical"?"cr":""}" cx="${x}" cy="${y}" r="20"/><text x="${x}" y="${y+4}" text-anchor="middle">${p.id}</text><text class="lab" x="${x+30}" y="${y+4}">${p.b}·${p.o[0]}</text>`});
+  h+=`<text class="lab" x="70" y="16" text-anchor="middle">DONORS</text><text class="lab" x="290" y="16" text-anchor="middle">PATIENTS</text>`;
+  el.setAttribute("viewBox",`0 0 360 ${H}`);el.innerHTML=h;
+}
+draw($("#heroG"),SAMPLE_D,SAMPLE_P,maximum(SAMPLE_D,SAMPLE_P),true);
+
+/* ===== CONSOLE UI ===== */
+function render(){
+  $("#dN").textContent=`(${D.length})`;$("#pN").textContent=`(${P.length})`;
+  $("#dT").innerHTML=D.map(d=>`<tr><td>${esc(d.id)}</td><td>${d.b}</td><td>${d.o}</td><td><button class="x" data-r="${d.id}" aria-label="Remove ${esc(d.id)}">✕</button></td></tr>`).join("")||`<tr><td colspan="4" class="muted">No donors</td></tr>`;
+  $("#pT").innerHTML=P.map(p=>`<tr><td>${esc(p.id)}</td><td>${p.b}</td><td>${p.o}</td><td><span class="badge ${p.u==="Critical"?"c":""}">${p.u}</span></td><td>${p.w} d</td><td><button class="x" data-r="${p.id}" aria-label="Remove ${esc(p.id)}">✕</button></td></tr>`).join("")||`<tr><td colspan="6" class="muted">No patients</td></tr>`;
+  draw($("#demoG"),D,P,res&&res.m,false);
+}
+function clearRes(){res=null;$("#sMax").textContent="–";$("#sGreedy").textContent="–";$("#rT").innerHTML='<tr><td colspan="4" class="muted">Run the matcher to see results.</td></tr>';$("#rNote").textContent=""}
+$("#bRun").onclick=()=>{
+  const m=maximum(D,P),g=baseline(D,P),nm=Object.keys(m).length,ng=Object.keys(g).length;res={m};
+  $("#sMax").textContent=nm;$("#sGreedy").textContent=ng;
+  const byP={};for(const id in m)byP[m[id].id]={d:D.find(d=>d.id===id)};
+  $("#rT").innerHTML=[...P].sort((a,b)=>score(b)-score(a)).map(p=>byP[p.id]?`<tr><td>${esc(p.id)}</td><td>${p.u}</td><td>${esc(byP[p.id].d.id)}</td><td>${byP[p.id].d.b} → ${p.b}</td></tr>`:`<tr><td>${esc(p.id)}</td><td>${p.u}</td><td class="muted" colspan="2">No compatible free donor</td></tr>`).join("")||`<tr><td colspan="4" class="muted">No patients</td></tr>`;
+  $("#rNote").textContent=nm>ng?`LifeLink finds ${nm-ng} more match${nm-ng>1?"es":""} than first-come-first-matched by re-routing earlier choices along augmenting paths.`:nm===ng?"Both methods find the same number here. Try adding donors and patients that compete for the same blood group.":"";
+  render();
+};
+$("#add").onsubmit=e=>{e.preventDefault();const t=$("#fType").value,b=$("#fBlood").value,o=$("#fOrgan").value;
+  if(t==="D")D.push({id:"D"+nD++,b,o});else P.push({id:"P"+nP++,b,o,u:$("#fUrg").value,w:Math.max(0,Math.min(5000,+$("#fWait").value||0))});clearRes();render()};
+$("#fType").onchange=()=>{const d=$("#fType").value==="D";$("#fUrg").disabled=d;$("#fWait").disabled=d};$("#fType").onchange();
+document.addEventListener("click",e=>{const r=e.target.closest("[data-r]");if(!r)return;const id=r.dataset.r;D=D.filter(x=>x.id!==id);P=P.filter(x=>x.id!==id);clearRes();render()});
+$("#bReset").onclick=()=>{D=structuredClone(SAMPLE_D);P=structuredClone(SAMPLE_P);nD=7;nP=6;clearRes();render()};
+render();
+
+/* ===== NAV, THEME, REVEAL ===== */
+$("#yr").textContent=new Date().getFullYear();
+$("#burger").onclick=()=>{const o=$("#menu").classList.toggle("open");$("#burger").setAttribute("aria-expanded",o)};
+$("#menu").onclick=e=>{if(e.target.tagName==="A"){$("#menu").classList.remove("open");$("#burger").setAttribute("aria-expanded","false")}};
+try{const t=localStorage.getItem("ll-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}
+$("#theme").onclick=()=>{const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark";try{localStorage.setItem("ll-theme",r.dataset.theme)}catch(e){}};
+const rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+if("IntersectionObserver" in window&&!rm){const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target)}}),{threshold:.08});document.querySelectorAll(".reveal").forEach(el=>io.observe(el))}
+else document.querySelectorAll(".reveal").forEach(el=>el.classList.add("in"));
+</script>
+</body>
+</html>
